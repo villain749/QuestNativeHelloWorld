@@ -359,362 +359,8 @@ static void ovrEgl_DestroyContext(ovrEgl* egl) {
     }
 }
 
-/*
-================================================================================
 
-ovrGeometry
 
-================================================================================
-*/
-
-typedef struct {
-    GLint Index;
-    GLint Size;
-    GLenum Type;
-    GLboolean Normalized;
-    GLsizei Stride;
-    const GLvoid* Pointer;
-} ovrVertexAttribPointer;
-
-#define MAX_VERTEX_ATTRIB_POINTERS 3
-
-typedef struct {
-    GLuint VertexBuffer;
-    GLuint IndexBuffer;
-    GLuint VertexArrayObject;
-    int VertexCount;
-    int IndexCount;
-    ovrVertexAttribPointer VertexAttribs[MAX_VERTEX_ATTRIB_POINTERS];
-} ovrGeometry;
-
-enum VertexAttributeLocation {
-    VERTEX_ATTRIBUTE_LOCATION_POSITION,
-    VERTEX_ATTRIBUTE_LOCATION_COLOR,
-    VERTEX_ATTRIBUTE_LOCATION_UV,
-    VERTEX_ATTRIBUTE_LOCATION_TRANSFORM
-};
-
-typedef struct {
-    enum VertexAttributeLocation location;
-    const char* name;
-} ovrVertexAttribute;
-
-static ovrVertexAttribute ProgramVertexAttributes[] = {
-    {VERTEX_ATTRIBUTE_LOCATION_POSITION, "vertexPosition"},
-    {VERTEX_ATTRIBUTE_LOCATION_COLOR, "vertexColor"},
-    {VERTEX_ATTRIBUTE_LOCATION_UV, "vertexUv"},
-    {VERTEX_ATTRIBUTE_LOCATION_TRANSFORM, "vertexTransform"}};
-
-static void ovrGeometry_Clear(ovrGeometry* geometry) {
-    geometry->VertexBuffer = 0;
-    geometry->IndexBuffer = 0;
-    geometry->VertexArrayObject = 0;
-    geometry->VertexCount = 0;
-    geometry->IndexCount = 0;
-    for (int i = 0; i < MAX_VERTEX_ATTRIB_POINTERS; i++) {
-        memset(&geometry->VertexAttribs[i], 0, sizeof(geometry->VertexAttribs[i]));
-        geometry->VertexAttribs[i].Index = -1;
-    }
-}
-
-static void ovrGeometry_CreateCube(ovrGeometry* geometry) {
-    typedef struct {
-        char positions[8][4];
-        unsigned char colors[8][4];
-    } ovrCubeVertices;
-
-    static const ovrCubeVertices cubeVertices = {
-        // positions
-        {
-            {-127, +127, -127, +127},
-            {+127, +127, -127, +127},
-            {+127, +127, +127, +127},
-            {-127, +127, +127, +127}, // top
-            {-127, -127, -127, +127},
-            {-127, -127, +127, +127},
-            {+127, -127, +127, +127},
-            {+127, -127, -127, +127} // bottom
-        },
-        // colors
-        {{255, 0, 255, 255},
-         {0, 255, 0, 255},
-         {0, 0, 255, 255},
-         {255, 0, 0, 255},
-         {0, 0, 255, 255},
-         {0, 255, 0, 255},
-         {255, 0, 255, 255},
-         {255, 0, 0, 255}},
-    };
-
-    static const unsigned short cubeIndices[36] = {
-        0, 2, 1, 2, 0, 3, // top
-        4, 6, 5, 6, 4, 7, // bottom
-        2, 6, 7, 7, 1, 2, // right
-        0, 4, 5, 5, 3, 0, // left
-        3, 5, 6, 6, 2, 3, // front
-        0, 1, 7, 7, 4, 0 // back
-    };
-
-    geometry->VertexCount = 8;
-    geometry->IndexCount = 36;
-
-    geometry->VertexAttribs[0].Index = VERTEX_ATTRIBUTE_LOCATION_POSITION;
-    geometry->VertexAttribs[0].Size = 4;
-    geometry->VertexAttribs[0].Type = GL_BYTE;
-    geometry->VertexAttribs[0].Normalized = true;
-    geometry->VertexAttribs[0].Stride = sizeof(cubeVertices.positions[0]);
-    geometry->VertexAttribs[0].Pointer = (const GLvoid*)offsetof(ovrCubeVertices, positions);
-
-    geometry->VertexAttribs[1].Index = VERTEX_ATTRIBUTE_LOCATION_COLOR;
-    geometry->VertexAttribs[1].Size = 4;
-    geometry->VertexAttribs[1].Type = GL_UNSIGNED_BYTE;
-    geometry->VertexAttribs[1].Normalized = true;
-    geometry->VertexAttribs[1].Stride = sizeof(cubeVertices.colors[0]);
-    geometry->VertexAttribs[1].Pointer = (const GLvoid*)offsetof(ovrCubeVertices, colors);
-
-    glGenBuffers(1, &geometry->VertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, geometry->VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glGenBuffers(1, &geometry->IndexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->IndexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-static void ovrGeometry_Destroy(ovrGeometry* geometry) {
-    glDeleteBuffers(1, &geometry->IndexBuffer);
-    glDeleteBuffers(1, &geometry->VertexBuffer);
-
-    ovrGeometry_Clear(geometry);
-}
-
-static void ovrGeometry_CreateVAO(ovrGeometry* geometry) {
-    glGenVertexArrays(1, &geometry->VertexArrayObject);
-    glBindVertexArray(geometry->VertexArrayObject);
-
-    glBindBuffer(GL_ARRAY_BUFFER, geometry->VertexBuffer);
-
-    for (int i = 0; i < MAX_VERTEX_ATTRIB_POINTERS; i++) {
-        if (geometry->VertexAttribs[i].Index != -1) {
-            glEnableVertexAttribArray(geometry->VertexAttribs[i].Index);
-            glVertexAttribPointer(
-                geometry->VertexAttribs[i].Index,
-                geometry->VertexAttribs[i].Size,
-                geometry->VertexAttribs[i].Type,
-                geometry->VertexAttribs[i].Normalized,
-                geometry->VertexAttribs[i].Stride,
-                geometry->VertexAttribs[i].Pointer);
-        }
-    }
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->IndexBuffer);
-
-    glBindVertexArray(0);
-}
-
-static void ovrGeometry_DestroyVAO(ovrGeometry* geometry) {
-    glDeleteVertexArrays(1, &geometry->VertexArrayObject);
-}
-
-/*
-================================================================================
-
-ovrProgram
-
-================================================================================
-*/
-
-#define MAX_PROGRAM_UNIFORMS 8
-#define MAX_PROGRAM_TEXTURES 8
-
-typedef struct {
-    GLuint Program;
-    GLuint VertexShader;
-    GLuint FragmentShader;
-    // These will be -1 if not used by the program.
-    GLint UniformLocation[MAX_PROGRAM_UNIFORMS]; // ProgramUniforms[].name
-    GLint UniformBinding[MAX_PROGRAM_UNIFORMS]; // ProgramUniforms[].name
-    GLint Textures[MAX_PROGRAM_TEXTURES]; // Texture%i
-} ovrProgram;
-
-typedef struct {
-    enum {
-        UNIFORM_MODEL_MATRIX,
-        UNIFORM_VIEW_ID,
-        UNIFORM_SCENE_MATRICES,
-    } index;
-    enum {
-        UNIFORM_TYPE_VECTOR4,
-        UNIFORM_TYPE_MATRIX4X4,
-        UNIFORM_TYPE_INT,
-        UNIFORM_TYPE_BUFFER,
-    } type;
-    const char* name;
-} ovrUniform;
-
-static ovrUniform ProgramUniforms[] = {
-    {UNIFORM_MODEL_MATRIX, UNIFORM_TYPE_MATRIX4X4, "ModelMatrix"},
-    {UNIFORM_VIEW_ID, UNIFORM_TYPE_INT, "ViewID"},
-    {UNIFORM_SCENE_MATRICES, UNIFORM_TYPE_BUFFER, "SceneMatrices"},
-};
-
-static void ovrProgram_Clear(ovrProgram* program) {
-    program->Program = 0;
-    program->VertexShader = 0;
-    program->FragmentShader = 0;
-    memset(program->UniformLocation, 0, sizeof(program->UniformLocation));
-    memset(program->UniformBinding, 0, sizeof(program->UniformBinding));
-    memset(program->Textures, 0, sizeof(program->Textures));
-}
-
-static const char* programVersion = "#version 300 es\n";
-
-static bool ovrProgram_Create(
-    ovrProgram* program,
-    const char* vertexSource,
-    const char* fragmentSource,
-    const bool useMultiview) {
-    GLint r;
-
-    program->VertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-    const char* vertexSources[3] = {
-        programVersion,
-        (useMultiview) ? "#define DISABLE_MULTIVIEW 0\n" : "#define DISABLE_MULTIVIEW 1\n",
-        vertexSource};
-    glShaderSource(program->VertexShader, 3, vertexSources, 0);
-    glCompileShader(program->VertexShader);
-    glGetShaderiv(program->VertexShader, GL_COMPILE_STATUS, &r);
-    if (r == GL_FALSE) {
-        GLchar msg[4096];
-        glGetShaderInfoLog(program->VertexShader, sizeof(msg), 0, msg);
-        ALOGE("%s\n%s\n", vertexSource, msg);
-        return false;
-    }
-
-    const char* fragmentSources[2] = {programVersion, fragmentSource};
-    program->FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(program->FragmentShader, 2, fragmentSources, 0);
-    glCompileShader(program->FragmentShader);
-    glGetShaderiv(program->FragmentShader, GL_COMPILE_STATUS, &r);
-    if (r == GL_FALSE) {
-        GLchar msg[4096];
-        glGetShaderInfoLog(program->FragmentShader, sizeof(msg), 0, msg);
-        ALOGE("%s\n%s\n", fragmentSource, msg);
-        return false;
-    }
-
-    program->Program = glCreateProgram();
-    glAttachShader(program->Program, program->VertexShader);
-    glAttachShader(program->Program, program->FragmentShader);
-
-    // Bind the vertex attribute locations.
-    for (int i = 0; i < sizeof(ProgramVertexAttributes) / sizeof(ProgramVertexAttributes[0]); i++) {
-        glBindAttribLocation(
-            program->Program,
-            ProgramVertexAttributes[i].location,
-            ProgramVertexAttributes[i].name);
-    }
-
-    glLinkProgram(program->Program);
-    glGetProgramiv(program->Program, GL_LINK_STATUS, &r);
-    if (r == GL_FALSE) {
-        GLchar msg[4096];
-        glGetProgramInfoLog(program->Program, sizeof(msg), 0, msg);
-        ALOGE("Linking program failed: %s\n", msg);
-        return false;
-    }
-
-    int numBufferBindings = 0;
-
-    // Get the uniform locations.
-    memset(program->UniformLocation, -1, sizeof(program->UniformLocation));
-    for (int i = 0; i < sizeof(ProgramUniforms) / sizeof(ProgramUniforms[0]); i++) {
-        const int uniformIndex = ProgramUniforms[i].index;
-        if (ProgramUniforms[i].type == UNIFORM_TYPE_BUFFER) {
-            program->UniformLocation[uniformIndex] =
-                   glGetUniformBlockIndex(program->Program, ProgramUniforms[i].name);
-            program->UniformBinding[uniformIndex] = numBufferBindings++;
-            glUniformBlockBinding(
-                program->Program,
-                program->UniformLocation[uniformIndex],
-                program->UniformBinding[uniformIndex]);
-        } else {
-            program->UniformLocation[uniformIndex] =
-                   glGetUniformLocation(program->Program, ProgramUniforms[i].name);
-            program->UniformBinding[uniformIndex] = program->UniformLocation[uniformIndex];
-        }
-    }
-
-    glUseProgram(program->Program);
-
-    // Get the texture locations.
-    for (int i = 0; i < MAX_PROGRAM_TEXTURES; i++) {
-        char name[32];
-        sprintf(name, "Texture%i", i);
-        program->Textures[i] = glGetUniformLocation(program->Program, name);
-        if (program->Textures[i] != -1) {
-            glUniform1i(program->Textures[i], i);
-        }
-    }
-
-    glUseProgram(0);
-
-    return true;
-}
-
-static void ovrProgram_Destroy(ovrProgram* program) {
-    if (program->Program != 0) {
-        glDeleteProgram(program->Program);
-        program->Program = 0;
-    }
-    if (program->VertexShader != 0) {
-        glDeleteShader(program->VertexShader);
-        program->VertexShader = 0;
-    }
-    if (program->FragmentShader != 0) {
-        glDeleteShader(program->FragmentShader);
-        program->FragmentShader = 0;
-    }
-}
-
-static const char VERTEX_SHADER[] =
-    "#ifndef DISABLE_MULTIVIEW\n"
-    "	#define DISABLE_MULTIVIEW 0\n"
-    "#endif\n"
-    "#define NUM_VIEWS 2\n"
-    "#if defined( GL_OVR_multiview2 ) && ! DISABLE_MULTIVIEW\n"
-    "	#extension GL_OVR_multiview2 : enable\n"
-    "	layout(num_views=NUM_VIEWS) in;\n"
-    "	#define VIEW_ID gl_ViewID_OVR\n"
-    "#else\n"
-    "	uniform lowp int ViewID;\n"
-    "	#define VIEW_ID ViewID\n"
-    "#endif\n"
-    "in vec3 vertexPosition;\n"
-    "in vec4 vertexColor;\n"
-    "in mat4 vertexTransform;\n"
-    "uniform SceneMatrices\n"
-    "{\n"
-    "	uniform mat4 ViewMatrix[NUM_VIEWS];\n"
-    "	uniform mat4 ProjectionMatrix[NUM_VIEWS];\n"
-    "} sm;\n"
-    "out vec4 fragmentColor;\n"
-    "void main()\n"
-    "{\n"
-    "	gl_Position = sm.ProjectionMatrix[VIEW_ID] * ( sm.ViewMatrix[VIEW_ID] * ( vertexTransform * vec4( vertexPosition * 0.1, 1.0 ) ) );\n"
-    "	fragmentColor = vertexColor;\n"
-    "}\n";
-
-static const char FRAGMENT_SHADER[] =
-    "in lowp vec4 fragmentColor;\n"
-    "out lowp vec4 outColor;\n"
-    "void main()\n"
-    "{\n"
-    "	outColor = fragmentColor;\n"
-    "}\n";
 
 /*
 ================================================================================
@@ -976,8 +622,6 @@ typedef struct {
     bool CreatedScene;
     bool CreatedVAOs;
     unsigned int Random;
-    ovrProgram Program;
-    ovrGeometry Cube;
     GLuint SceneMatrices;
     GLuint InstanceTransformBuffer;
     ovrVector3f Rotations[NUM_ROTATIONS];
@@ -992,8 +636,6 @@ static void ovrScene_Clear(ovrScene* scene) {
     scene->SceneMatrices = 0;
     scene->InstanceTransformBuffer = 0;
 
-    ovrProgram_Clear(&scene->Program);
-    ovrGeometry_Clear(&scene->Cube);
 }
 
 static bool ovrScene_IsCreated(ovrScene* scene) {
@@ -1002,32 +644,12 @@ static bool ovrScene_IsCreated(ovrScene* scene) {
 
 static void ovrScene_CreateVAOs(ovrScene* scene) {
     if (!scene->CreatedVAOs) {
-        ovrGeometry_CreateVAO(&scene->Cube);
-
-        // Modify the VAO to use the instance transform attributes.
-        glBindVertexArray(scene->Cube.VertexArrayObject);
-        glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer);
-        for (int i = 0; i < 4; i++) {
-            glEnableVertexAttribArray(VERTEX_ATTRIBUTE_LOCATION_TRANSFORM + i);
-            glVertexAttribPointer(
-                VERTEX_ATTRIBUTE_LOCATION_TRANSFORM + i,
-                4,
-                GL_FLOAT,
-                false,
-                4 * 4 * sizeof(float),
-                (void*)(i * 4 * sizeof(float)));
-            glVertexAttribDivisor(VERTEX_ATTRIBUTE_LOCATION_TRANSFORM + i, 1);
-        }
-        glBindVertexArray(0);
-
         scene->CreatedVAOs = true;
     }
 }
 
 static void ovrScene_DestroyVAOs(ovrScene* scene) {
     if (scene->CreatedVAOs) {
-        ovrGeometry_DestroyVAO(&scene->Cube);
-
         scene->CreatedVAOs = false;
     }
 }
@@ -1040,8 +662,8 @@ static float ovrScene_RandomFloat(ovrScene* scene) {
 }
 
 static void ovrScene_Create(ovrScene* scene, bool useMultiview) {
-    ovrProgram_Create(&scene->Program, VERTEX_SHADER, FRAGMENT_SHADER, useMultiview);
-    ovrGeometry_CreateCube(&scene->Cube);
+
+
 
     // Create the instance transform attribute buffer.
     glGenBuffers(1, &scene->InstanceTransformBuffer);
@@ -1129,12 +751,7 @@ static void ovrScene_Create(ovrScene* scene, bool useMultiview) {
 }
 
 static void ovrScene_Destroy(ovrScene* scene) {
-
     ovrScene_DestroyVAOs(scene);
-
-
-    ovrProgram_Destroy(&scene->Program);
-    ovrGeometry_Destroy(&scene->Cube);
     glDeleteBuffers(1, &scene->InstanceTransformBuffer);
     glDeleteBuffers(1, &scene->SceneMatrices);
     scene->CreatedScene = false;
@@ -1304,16 +921,6 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
         ovrFramebuffer* frameBuffer = &renderer->FrameBuffer[eye];
         ovrFramebuffer_SetCurrent(frameBuffer);
 
-        glUseProgram(scene->Program.Program);
-        glBindBufferBase(
-            GL_UNIFORM_BUFFER,
-            scene->Program.UniformBinding[UNIFORM_SCENE_MATRICES],
-            scene->SceneMatrices);
-        if (scene->Program.UniformLocation[UNIFORM_VIEW_ID] >=
-            0) // NOTE: will not be present when multiview path is enabled.
-        {
-            glUniform1i(scene->Program.UniformLocation[UNIFORM_VIEW_ID], eye);
-        }
         glEnable(GL_SCISSOR_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -1322,11 +929,9 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
         glCullFace(GL_BACK);
         glViewport(0, 0, frameBuffer->Width, frameBuffer->Height);
         glScissor(0, 0, frameBuffer->Width, frameBuffer->Height);
-        glClearColor(0.90f, 0.009f, 0.00900125f, 1.0f);
+        glClearColor(0.75f, 0.5f, 0.00900125f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glBindVertexArray(scene->Cube.VertexArrayObject);
-        glDrawElementsInstanced(
-            GL_TRIANGLES, scene->Cube.IndexCount, GL_UNSIGNED_SHORT, NULL, NUM_INSTANCES);
+
         glBindVertexArray(0);
         glUseProgram(0);
 
@@ -1338,14 +943,6 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
 
     return layer;
 }
-
-/*
-================================================================================
-
-ovrRenderThread
-
-================================================================================
-*/
 
 
 
