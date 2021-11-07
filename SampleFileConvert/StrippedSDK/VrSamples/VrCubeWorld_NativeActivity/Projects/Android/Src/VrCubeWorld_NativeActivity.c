@@ -7,7 +7,7 @@ Content     :   This sample uses the Android NativeActivity class. This sample d
 Created     :   March, 2015
 Authors     :   J.M.P. van Waveren
 
-Copyright   :   Copyright (c) Facebook Technologies, LLC and its affiliates. All rights reserved.
+Copyright   :   Copyright (c) Facebo0ok Technologies, LLC and its affiliates. All rights reserved.
 
 *************************************************************************************/
 
