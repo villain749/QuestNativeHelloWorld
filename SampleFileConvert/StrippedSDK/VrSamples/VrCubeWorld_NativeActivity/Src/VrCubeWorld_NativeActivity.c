@@ -615,62 +615,27 @@ ovrScene
 ================================================================================
 */
 
-#define NUM_INSTANCES 300 //(int)SJClass::myflt //3150
-#define NUM_ROTATIONS 16
+
 
 typedef struct {
     bool CreatedScene;
-    bool CreatedVAOs;
     unsigned int Random;
     GLuint SceneMatrices;
-    GLuint InstanceTransformBuffer;
-    ovrVector3f Rotations[NUM_ROTATIONS];
-    ovrVector3f CubePositions[NUM_INSTANCES];
-    int CubeRotations[NUM_INSTANCES];
 } ovrScene;
 
 static void ovrScene_Clear(ovrScene* scene) {
     scene->CreatedScene = false;
-    scene->CreatedVAOs = false;
     scene->Random = 2;
     scene->SceneMatrices = 0;
-    scene->InstanceTransformBuffer = 0;
-
 }
 
 static bool ovrScene_IsCreated(ovrScene* scene) {
     return scene->CreatedScene;
 }
 
-static void ovrScene_CreateVAOs(ovrScene* scene) {
-    if (!scene->CreatedVAOs) {
-        scene->CreatedVAOs = true;
-    }
-}
 
-static void ovrScene_DestroyVAOs(ovrScene* scene) {
-    if (scene->CreatedVAOs) {
-        scene->CreatedVAOs = false;
-    }
-}
-
-// Returns a random float in the range [0, 1].
-static float ovrScene_RandomFloat(ovrScene* scene) {
-    scene->Random = 1664525L * scene->Random + 1013904223L;
-    unsigned int rf = 0x3F800000 | (scene->Random & 0x007FFFFF);
-    return (*(float*)&rf) - 1.0f;
-}
 
 static void ovrScene_Create(ovrScene* scene, bool useMultiview) {
-
-
-
-    // Create the instance transform attribute buffer.
-    glGenBuffers(1, &scene->InstanceTransformBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer);
-    glBufferData(GL_ARRAY_BUFFER, NUM_INSTANCES * 4 * 4 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
     // Setup the scene matrices.
     glGenBuffers(1, &scene->SceneMatrices);
     glBindBuffer(GL_UNIFORM_BUFFER, scene->SceneMatrices);
@@ -681,106 +646,15 @@ static void ovrScene_Create(ovrScene* scene, bool useMultiview) {
         NULL,
         GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    // Setup random rotations.
-    for (int i = 0; i < NUM_ROTATIONS; i++) {
-        scene->Rotations[i].x = ovrScene_RandomFloat(scene);
-        scene->Rotations[i].y = ovrScene_RandomFloat(scene);
-        scene->Rotations[i].z = ovrScene_RandomFloat(scene);
-    }
-
-    // Setup random cube positions and rotations.
-    for (int i = 0; i < NUM_INSTANCES; i++) {
-        // Using volatile keeps the compiler from optimizing away multiple calls to
-        // ovrScene_RandomFloat().
-        volatile float rx, ry, rz;
-        for (;;) {
-            rx = (ovrScene_RandomFloat(scene) - 0.5f) * (50.0f + sqrt(NUM_INSTANCES));
-            ry = (ovrScene_RandomFloat(scene) - 0.5f) * (50.0f + sqrt(NUM_INSTANCES));
-            rz = (ovrScene_RandomFloat(scene) - 0.5f) * (50.0f + sqrt(NUM_INSTANCES));
-            // If too close to 0,0,0
-            if (fabsf(rx) < 4.0f && fabsf(ry) < 4.0f && fabsf(rz) < 4.0f) {
-                continue;
-            }
-            // Test for overlap with any of the existing cubes.
-            bool overlap = false;
-            for (int j = 0; j < i; j++) {
-                if (fabsf(rx - scene->CubePositions[j].x) < 4.0f &&
-                    fabsf(ry - scene->CubePositions[j].y) < 4.0f &&
-                    fabsf(rz - scene->CubePositions[j].z) < 4.0f) {
-                    overlap = true;
-                    break;
-                }
-            }
-            if (!overlap) {
-                break;
-            }
-        }
-
-        rx *= 0.1f;
-        ry *= 0.1f;
-        rz *= 0.1f;
-
-        // Insert into list sorted based on distance.
-        int insert = 0;
-        const float distSqr = rx * rx + ry * ry + rz * rz;
-        for (int j = i; j > 0; j--) {
-            const ovrVector3f* otherPos = &scene->CubePositions[j - 1];
-            const float otherDistSqr =
-                otherPos->x * otherPos->x + otherPos->y * otherPos->y + otherPos->z * otherPos->z;
-            if (distSqr > otherDistSqr) {
-                insert = j;
-                break;
-            }
-            scene->CubePositions[j] = scene->CubePositions[j - 1];
-            scene->CubeRotations[j] = scene->CubeRotations[j - 1];
-        }
-
-        scene->CubePositions[insert].x = rx;
-        scene->CubePositions[insert].y = ry;
-        scene->CubePositions[insert].z = rz;
-
-        scene->CubeRotations[insert] = (int)(ovrScene_RandomFloat(scene) * (NUM_ROTATIONS - 0.1f));
-    }
-
     scene->CreatedScene = true;
-
-
-    ovrScene_CreateVAOs(scene);
-
 }
 
+
 static void ovrScene_Destroy(ovrScene* scene) {
-    ovrScene_DestroyVAOs(scene);
-    glDeleteBuffers(1, &scene->InstanceTransformBuffer);
     glDeleteBuffers(1, &scene->SceneMatrices);
     scene->CreatedScene = false;
 }
 
-/*
-================================================================================
-
-ovrSimulation
-
-================================================================================
-*/
-
-typedef struct {
-    ovrVector3f CurrentRotation;
-} ovrSimulation;
-
-static void ovrSimulation_Clear(ovrSimulation* simulation) {
-    simulation->CurrentRotation.x = 0.0f;
-    simulation->CurrentRotation.y = 0.0f;
-    simulation->CurrentRotation.z = 0.0f;
-}
-
-static void ovrSimulation_Advance(ovrSimulation* simulation, double elapsedDisplayTime) {
-    // Update rotation.
-    simulation->CurrentRotation.x = (float)(elapsedDisplayTime);
-    simulation->CurrentRotation.y = (float)(elapsedDisplayTime);
-    simulation->CurrentRotation.z = (float)(elapsedDisplayTime);
-}
 
 /*
 ================================================================================
@@ -828,50 +702,8 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
     ovrRenderer* renderer,
     const ovrJava* java,
     const ovrScene* scene,
-    const ovrSimulation* simulation,
     const ovrTracking2* tracking,
     ovrMobile* ovr) {
-    ovrMatrix4f rotationMatrices[NUM_ROTATIONS];
-    for (int i = 0; i < NUM_ROTATIONS; i++) {
-        rotationMatrices[i] = ovrMatrix4f_CreateRotation(
-            scene->Rotations[i].x * simulation->CurrentRotation.x,
-            scene->Rotations[i].y * simulation->CurrentRotation.y,
-            scene->Rotations[i].z * simulation->CurrentRotation.z);
-    }
-
-    // Update the instance transform attributes.
-    glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer);
-    ovrMatrix4f* cubeTransforms = (ovrMatrix4f*)glMapBufferRange(
-           GL_ARRAY_BUFFER,
-           0,
-           NUM_INSTANCES * sizeof(ovrMatrix4f),
-           GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-    for (int i = 0; i < NUM_INSTANCES; i++) {
-        const int index = scene->CubeRotations[i];
-
-        // Write in order in case the mapped buffer lives on write-combined memory.
-        cubeTransforms[i].M[0][0] = rotationMatrices[index].M[0][0];
-        cubeTransforms[i].M[0][1] = rotationMatrices[index].M[0][1];
-        cubeTransforms[i].M[0][2] = rotationMatrices[index].M[0][2];
-        cubeTransforms[i].M[0][3] = rotationMatrices[index].M[0][3];
-
-        cubeTransforms[i].M[1][0] = rotationMatrices[index].M[1][0];
-        cubeTransforms[i].M[1][1] = rotationMatrices[index].M[1][1];
-        cubeTransforms[i].M[1][2] = rotationMatrices[index].M[1][2];
-        cubeTransforms[i].M[1][3] = rotationMatrices[index].M[1][3];
-
-        cubeTransforms[i].M[2][0] = rotationMatrices[index].M[2][0];
-        cubeTransforms[i].M[2][1] = rotationMatrices[index].M[2][1];
-        cubeTransforms[i].M[2][2] = rotationMatrices[index].M[2][2];
-        cubeTransforms[i].M[2][3] = rotationMatrices[index].M[2][3];
-
-        cubeTransforms[i].M[3][0] = scene->CubePositions[i].x;
-        cubeTransforms[i].M[3][1] = scene->CubePositions[i].y;
-        cubeTransforms[i].M[3][2] = scene->CubePositions[i].z;
-        cubeTransforms[i].M[3][3] = 1.0f;
-    }
-    glUnmapBuffer(GL_ARRAY_BUFFER);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     ovrTracking2 updatedTracking = *tracking;
 
@@ -921,19 +753,16 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
         ovrFramebuffer* frameBuffer = &renderer->FrameBuffer[eye];
         ovrFramebuffer_SetCurrent(frameBuffer);
 
-        glEnable(GL_SCISSOR_TEST);
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
+        //glDepthMask(GL_TRUE);
+        //glEnable(GL_SCISSOR_TEST);
+        //glEnable(GL_DEPTH_TEST);
+        //glDepthFunc(GL_LEQUAL);
+        //glEnable(GL_CULL_FACE);
+        //glCullFace(GL_BACK);
         glViewport(0, 0, frameBuffer->Width, frameBuffer->Height);
         glScissor(0, 0, frameBuffer->Width, frameBuffer->Height);
-        glClearColor(0.75f, 0.5f, 0.00900125f, 1.0f);
+        glClearColor(0.0f, 0.0f, getBlueVal(), 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glBindVertexArray(0);
-        glUseProgram(0);
 
         ovrFramebuffer_Resolve(frameBuffer);
         ovrFramebuffer_Advance(frameBuffer);
@@ -961,7 +790,6 @@ typedef struct {
     bool Resumed;
     ovrMobile* Ovr;
     ovrScene Scene;
-    ovrSimulation Simulation;
     long long FrameIndex;
     double DisplayTime;
     int SwapInterval;
@@ -993,8 +821,6 @@ static void ovrApp_Clear(ovrApp* app) {
 
     ovrEgl_Clear(&app->Egl);
     ovrScene_Clear(&app->Scene);
-    ovrSimulation_Clear(&app->Simulation);
-
     ovrRenderer_Clear(&app->Renderer);
 
 }
@@ -1290,17 +1116,12 @@ void android_main(struct android_app* app) {
 
         appState.DisplayTime = predictedDisplayTime;
 
-        // Advance the simulation based on the elapsed time since start of loop till predicted
-        // display time.
-        ovrSimulation_Advance(&appState.Simulation, predictedDisplayTime - startTime);
-
 
         // Render eye images and setup the primary layer using ovrTracking2.
         const ovrLayerProjection2 worldLayer = ovrRenderer_RenderFrame(
             &appState.Renderer,
             &appState.Java,
             &appState.Scene,
-            &appState.Simulation,
             &tracking,
             appState.Ovr);
 

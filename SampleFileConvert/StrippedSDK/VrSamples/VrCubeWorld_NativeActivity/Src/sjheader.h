@@ -6,4 +6,12 @@ float domath(float a, float b) {
 }
 
 
+float getBlueVal() {
+    return 1.0f;
+}
+
+
+
+
+
 #endif
