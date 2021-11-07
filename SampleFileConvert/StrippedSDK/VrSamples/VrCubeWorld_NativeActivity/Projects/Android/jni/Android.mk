@@ -7,7 +7,7 @@ LOCAL_MODULE := vrcubeworld
 LOCAL_CFLAGS += -std=c99 -Werror
 
 
-LOCAL_SRC_FILES := ../../../Src/VrCubeWorld_NativeActivity.c
+LOCAL_SRC_FILES := ../../../Src/sjheader.h ../../../Src/VrCubeWorld_NativeActivity.c
 
 LOCAL_LDLIBS := -lEGL -lGLESv3 -landroid -llog
 

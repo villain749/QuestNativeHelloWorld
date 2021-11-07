@@ -4,10 +4,10 @@ Filename    :   VrCubeWorld_NativeActivity.c
 Content     :   This sample uses the Android NativeActivity class. This sample does
                 not use the application framework.
                 This sample only uses the VrApi.
-Created     :   March, 2015
+Created     :   March, 2015 dude
 Authors     :   J.M.P. van Waveren
 
-Copyright   :   Copyright (c) Facebo00000ok Technologies, LLC and its affiliates. All rights reserved.
+Copyright   :   Copyright (c) Facebo0000ok Technologies, LLC and its affiliates. All rights reserved.
 
 *************************************************************************************/
 
@@ -21,7 +21,7 @@ Copyright   :   Copyright (c) Facebo00000ok Technologies, LLC and its affiliates
 #include <android/log.h>
 #include <android/native_window_jni.h> // for native window JNI
 #include <android_native_app_glue.h>
-
+#include "sjheader.h"
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -100,7 +100,7 @@ static const int CPU_LEVEL = 2;
 static const int GPU_LEVEL = 3;
 static const int NUM_MULTI_SAMPLES = 4;
 
-#define MULTI_THREADED 0
+
 
 /*
 ================================================================================
@@ -201,46 +201,7 @@ static const char* GlFrameBufferStatusString(GLenum status) {
     }
 }
 
-#ifdef CHECK_GL_ERRORS
 
-static const char* GlErrorString(GLenum error) {
-    switch (error) {
-        case GL_NO_ERROR:
-            return "GL_NO_ERROR";
-        case GL_INVALID_ENUM:
-            return "GL_INVALID_ENUM";
-        case GL_INVALID_VALUE:
-            return "GL_INVALID_VALUE";
-        case GL_INVALID_OPERATION:
-            return "GL_INVALID_OPERATION";
-        case GL_INVALID_FRAMEBUFFER_OPERATION:
-            return "GL_INVALID_FRAMEBUFFER_OPERATION";
-        case GL_OUT_OF_MEMORY:
-            return "GL_OUT_OF_MEMORY";
-        default:
-            return "unknown";
-    }
-}
-
-static void GLCheckErrors(int line) {
-    for (int i = 0; i < 10; i++) {
-        const GLenum error = glGetError();
-        if (error == GL_NO_ERROR) {
-            break;
-        }
-        ALOGE("GL error on line %d: %s", line, GlErrorString(error));
-    }
-}
-
-#define GL(func) \
-    func;        \
-    GLCheckErrors(__LINE__);
-
-#else // CHECK_GL_ERRORS
-
-#define GL(func) func;
-
-#endif // CHECK_GL_ERRORS
 
 /*
 ================================================================================
@@ -511,50 +472,50 @@ static void ovrGeometry_CreateCube(ovrGeometry* geometry) {
     geometry->VertexAttribs[1].Stride = sizeof(cubeVertices.colors[0]);
     geometry->VertexAttribs[1].Pointer = (const GLvoid*)offsetof(ovrCubeVertices, colors);
 
-    GL(glGenBuffers(1, &geometry->VertexBuffer));
-    GL(glBindBuffer(GL_ARRAY_BUFFER, geometry->VertexBuffer));
-    GL(glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW));
-    GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    glGenBuffers(1, &geometry->VertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, geometry->VertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    GL(glGenBuffers(1, &geometry->IndexBuffer));
-    GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->IndexBuffer));
-    GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW));
-    GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+    glGenBuffers(1, &geometry->IndexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->IndexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 static void ovrGeometry_Destroy(ovrGeometry* geometry) {
-    GL(glDeleteBuffers(1, &geometry->IndexBuffer));
-    GL(glDeleteBuffers(1, &geometry->VertexBuffer));
+    glDeleteBuffers(1, &geometry->IndexBuffer);
+    glDeleteBuffers(1, &geometry->VertexBuffer);
 
     ovrGeometry_Clear(geometry);
 }
 
 static void ovrGeometry_CreateVAO(ovrGeometry* geometry) {
-    GL(glGenVertexArrays(1, &geometry->VertexArrayObject));
-    GL(glBindVertexArray(geometry->VertexArrayObject));
+    glGenVertexArrays(1, &geometry->VertexArrayObject);
+    glBindVertexArray(geometry->VertexArrayObject);
 
-    GL(glBindBuffer(GL_ARRAY_BUFFER, geometry->VertexBuffer));
+    glBindBuffer(GL_ARRAY_BUFFER, geometry->VertexBuffer);
 
     for (int i = 0; i < MAX_VERTEX_ATTRIB_POINTERS; i++) {
         if (geometry->VertexAttribs[i].Index != -1) {
-            GL(glEnableVertexAttribArray(geometry->VertexAttribs[i].Index));
-            GL(glVertexAttribPointer(
+            glEnableVertexAttribArray(geometry->VertexAttribs[i].Index);
+            glVertexAttribPointer(
                 geometry->VertexAttribs[i].Index,
                 geometry->VertexAttribs[i].Size,
                 geometry->VertexAttribs[i].Type,
                 geometry->VertexAttribs[i].Normalized,
                 geometry->VertexAttribs[i].Stride,
-                geometry->VertexAttribs[i].Pointer));
+                geometry->VertexAttribs[i].Pointer);
         }
     }
 
-    GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->IndexBuffer));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->IndexBuffer);
 
-    GL(glBindVertexArray(0));
+    glBindVertexArray(0);
 }
 
 static void ovrGeometry_DestroyVAO(ovrGeometry* geometry) {
-    GL(glDeleteVertexArrays(1, &geometry->VertexArrayObject));
+    glDeleteVertexArrays(1, &geometry->VertexArrayObject);
 }
 
 /*
@@ -617,51 +578,51 @@ static bool ovrProgram_Create(
     const bool useMultiview) {
     GLint r;
 
-    GL(program->VertexShader = glCreateShader(GL_VERTEX_SHADER));
+    program->VertexShader = glCreateShader(GL_VERTEX_SHADER);
 
     const char* vertexSources[3] = {
         programVersion,
         (useMultiview) ? "#define DISABLE_MULTIVIEW 0\n" : "#define DISABLE_MULTIVIEW 1\n",
         vertexSource};
-    GL(glShaderSource(program->VertexShader, 3, vertexSources, 0));
-    GL(glCompileShader(program->VertexShader));
-    GL(glGetShaderiv(program->VertexShader, GL_COMPILE_STATUS, &r));
+    glShaderSource(program->VertexShader, 3, vertexSources, 0);
+    glCompileShader(program->VertexShader);
+    glGetShaderiv(program->VertexShader, GL_COMPILE_STATUS, &r);
     if (r == GL_FALSE) {
         GLchar msg[4096];
-        GL(glGetShaderInfoLog(program->VertexShader, sizeof(msg), 0, msg));
+        glGetShaderInfoLog(program->VertexShader, sizeof(msg), 0, msg);
         ALOGE("%s\n%s\n", vertexSource, msg);
         return false;
     }
 
     const char* fragmentSources[2] = {programVersion, fragmentSource};
-    GL(program->FragmentShader = glCreateShader(GL_FRAGMENT_SHADER));
-    GL(glShaderSource(program->FragmentShader, 2, fragmentSources, 0));
-    GL(glCompileShader(program->FragmentShader));
-    GL(glGetShaderiv(program->FragmentShader, GL_COMPILE_STATUS, &r));
+    program->FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(program->FragmentShader, 2, fragmentSources, 0);
+    glCompileShader(program->FragmentShader);
+    glGetShaderiv(program->FragmentShader, GL_COMPILE_STATUS, &r);
     if (r == GL_FALSE) {
         GLchar msg[4096];
-        GL(glGetShaderInfoLog(program->FragmentShader, sizeof(msg), 0, msg));
+        glGetShaderInfoLog(program->FragmentShader, sizeof(msg), 0, msg);
         ALOGE("%s\n%s\n", fragmentSource, msg);
         return false;
     }
 
-    GL(program->Program = glCreateProgram());
-    GL(glAttachShader(program->Program, program->VertexShader));
-    GL(glAttachShader(program->Program, program->FragmentShader));
+    program->Program = glCreateProgram();
+    glAttachShader(program->Program, program->VertexShader);
+    glAttachShader(program->Program, program->FragmentShader);
 
     // Bind the vertex attribute locations.
     for (int i = 0; i < sizeof(ProgramVertexAttributes) / sizeof(ProgramVertexAttributes[0]); i++) {
-        GL(glBindAttribLocation(
+        glBindAttribLocation(
             program->Program,
             ProgramVertexAttributes[i].location,
-            ProgramVertexAttributes[i].name));
+            ProgramVertexAttributes[i].name);
     }
 
-    GL(glLinkProgram(program->Program));
-    GL(glGetProgramiv(program->Program, GL_LINK_STATUS, &r));
+    glLinkProgram(program->Program);
+    glGetProgramiv(program->Program, GL_LINK_STATUS, &r);
     if (r == GL_FALSE) {
         GLchar msg[4096];
-        GL(glGetProgramInfoLog(program->Program, sizeof(msg), 0, msg));
+        glGetProgramInfoLog(program->Program, sizeof(msg), 0, msg);
         ALOGE("Linking program failed: %s\n", msg);
         return false;
     }
@@ -673,21 +634,21 @@ static bool ovrProgram_Create(
     for (int i = 0; i < sizeof(ProgramUniforms) / sizeof(ProgramUniforms[0]); i++) {
         const int uniformIndex = ProgramUniforms[i].index;
         if (ProgramUniforms[i].type == UNIFORM_TYPE_BUFFER) {
-            GL(program->UniformLocation[uniformIndex] =
-                   glGetUniformBlockIndex(program->Program, ProgramUniforms[i].name));
+            program->UniformLocation[uniformIndex] =
+                   glGetUniformBlockIndex(program->Program, ProgramUniforms[i].name);
             program->UniformBinding[uniformIndex] = numBufferBindings++;
-            GL(glUniformBlockBinding(
+            glUniformBlockBinding(
                 program->Program,
                 program->UniformLocation[uniformIndex],
-                program->UniformBinding[uniformIndex]));
+                program->UniformBinding[uniformIndex]);
         } else {
-            GL(program->UniformLocation[uniformIndex] =
-                   glGetUniformLocation(program->Program, ProgramUniforms[i].name));
+            program->UniformLocation[uniformIndex] =
+                   glGetUniformLocation(program->Program, ProgramUniforms[i].name);
             program->UniformBinding[uniformIndex] = program->UniformLocation[uniformIndex];
         }
     }
 
-    GL(glUseProgram(program->Program));
+    glUseProgram(program->Program);
 
     // Get the texture locations.
     for (int i = 0; i < MAX_PROGRAM_TEXTURES; i++) {
@@ -695,26 +656,26 @@ static bool ovrProgram_Create(
         sprintf(name, "Texture%i", i);
         program->Textures[i] = glGetUniformLocation(program->Program, name);
         if (program->Textures[i] != -1) {
-            GL(glUniform1i(program->Textures[i], i));
+            glUniform1i(program->Textures[i], i);
         }
     }
 
-    GL(glUseProgram(0));
+    glUseProgram(0);
 
     return true;
 }
 
 static void ovrProgram_Destroy(ovrProgram* program) {
     if (program->Program != 0) {
-        GL(glDeleteProgram(program->Program));
+        glDeleteProgram(program->Program);
         program->Program = 0;
     }
     if (program->VertexShader != 0) {
-        GL(glDeleteShader(program->VertexShader));
+        glDeleteShader(program->VertexShader);
         program->VertexShader = 0;
     }
     if (program->FragmentShader != 0) {
-        GL(glDeleteShader(program->FragmentShader));
+        glDeleteShader(program->FragmentShader);
         program->FragmentShader = 0;
     }
 }
@@ -835,61 +796,61 @@ static bool ovrFramebuffer_Create(
         const GLuint colorTexture =
             vrapi_GetTextureSwapChainHandle(frameBuffer->ColorTextureSwapChain, i);
         GLenum colorTextureTarget = frameBuffer->UseMultiview ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
-        GL(glBindTexture(colorTextureTarget, colorTexture));
-        GL(glTexParameteri(colorTextureTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER));
-        GL(glTexParameteri(colorTextureTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER));
+        glBindTexture(colorTextureTarget, colorTexture);
+        glTexParameteri(colorTextureTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(colorTextureTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         GLfloat borderColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-        GL(glTexParameterfv(colorTextureTarget, GL_TEXTURE_BORDER_COLOR, borderColor));
-        GL(glTexParameteri(colorTextureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-        GL(glTexParameteri(colorTextureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-        GL(glBindTexture(colorTextureTarget, 0));
+        glTexParameterfv(colorTextureTarget, GL_TEXTURE_BORDER_COLOR, borderColor);
+        glTexParameteri(colorTextureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(colorTextureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(colorTextureTarget, 0);
 
         if (frameBuffer->UseMultiview) {
             // Create the depth buffer texture.
-            GL(glGenTextures(1, &frameBuffer->DepthBuffers[i]));
-            GL(glBindTexture(GL_TEXTURE_2D_ARRAY, frameBuffer->DepthBuffers[i]));
-            GL(glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT24, width, height, 2));
-            GL(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
+            glGenTextures(1, &frameBuffer->DepthBuffers[i]);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, frameBuffer->DepthBuffers[i]);
+            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT24, width, height, 2);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
             // Create the frame buffer.
-            GL(glGenFramebuffers(1, &frameBuffer->FrameBuffers[i]));
-            GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, frameBuffer->FrameBuffers[i]));
+            glGenFramebuffers(1, &frameBuffer->FrameBuffers[i]);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, frameBuffer->FrameBuffers[i]);
             if (multisamples > 1 && (glFramebufferTextureMultisampleMultiviewOVR != NULL)) {
-                GL(glFramebufferTextureMultisampleMultiviewOVR(
+                glFramebufferTextureMultisampleMultiviewOVR(
                     GL_DRAW_FRAMEBUFFER,
                     GL_DEPTH_ATTACHMENT,
                     frameBuffer->DepthBuffers[i],
                     0 /* level */,
                     multisamples /* samples */,
                     0 /* baseViewIndex */,
-                    2 /* numViews */));
-                GL(glFramebufferTextureMultisampleMultiviewOVR(
+                    2 /* numViews */);
+                glFramebufferTextureMultisampleMultiviewOVR(
                     GL_DRAW_FRAMEBUFFER,
                     GL_COLOR_ATTACHMENT0,
                     colorTexture,
                     0 /* level */,
                     multisamples /* samples */,
                     0 /* baseViewIndex */,
-                    2 /* numViews */));
+                    2 /* numViews */);
             } else {
-                GL(glFramebufferTextureMultiviewOVR(
+                glFramebufferTextureMultiviewOVR(
                     GL_DRAW_FRAMEBUFFER,
                     GL_DEPTH_ATTACHMENT,
                     frameBuffer->DepthBuffers[i],
                     0 /* level */,
                     0 /* baseViewIndex */,
-                    2 /* numViews */));
-                GL(glFramebufferTextureMultiviewOVR(
+                    2 /* numViews */);
+                glFramebufferTextureMultiviewOVR(
                     GL_DRAW_FRAMEBUFFER,
                     GL_COLOR_ATTACHMENT0,
                     colorTexture,
                     0 /* level */,
                     0 /* baseViewIndex */,
-                    2 /* numViews */));
+                    2 /* numViews */);
             }
 
-            GL(GLenum renderFramebufferStatus = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER));
-            GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+            GLenum renderFramebufferStatus = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
             if (renderFramebufferStatus != GL_FRAMEBUFFER_COMPLETE) {
                 ALOGE(
                     "Incomplete frame buffer object: %s",
@@ -900,30 +861,30 @@ static bool ovrFramebuffer_Create(
             if (multisamples > 1 && glRenderbufferStorageMultisampleEXT != NULL &&
                 glFramebufferTexture2DMultisampleEXT != NULL) {
                 // Create multisampled depth buffer.
-                GL(glGenRenderbuffers(1, &frameBuffer->DepthBuffers[i]));
-                GL(glBindRenderbuffer(GL_RENDERBUFFER, frameBuffer->DepthBuffers[i]));
-                GL(glRenderbufferStorageMultisampleEXT(
-                    GL_RENDERBUFFER, multisamples, GL_DEPTH_COMPONENT24, width, height));
-                GL(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+                glGenRenderbuffers(1, &frameBuffer->DepthBuffers[i]);
+                glBindRenderbuffer(GL_RENDERBUFFER, frameBuffer->DepthBuffers[i]);
+                glRenderbufferStorageMultisampleEXT(
+                    GL_RENDERBUFFER, multisamples, GL_DEPTH_COMPONENT24, width, height);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
                 // Create the frame buffer.
                 // NOTE: glFramebufferTexture2DMultisampleEXT only works with GL_FRAMEBUFFER.
-                GL(glGenFramebuffers(1, &frameBuffer->FrameBuffers[i]));
-                GL(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->FrameBuffers[i]));
-                GL(glFramebufferTexture2DMultisampleEXT(
+                glGenFramebuffers(1, &frameBuffer->FrameBuffers[i]);
+                glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->FrameBuffers[i]);
+                glFramebufferTexture2DMultisampleEXT(
                     GL_FRAMEBUFFER,
                     GL_COLOR_ATTACHMENT0,
                     GL_TEXTURE_2D,
                     colorTexture,
                     0,
-                    multisamples));
-                GL(glFramebufferRenderbuffer(
+                    multisamples);
+                glFramebufferRenderbuffer(
                     GL_FRAMEBUFFER,
                     GL_DEPTH_ATTACHMENT,
                     GL_RENDERBUFFER,
-                    frameBuffer->DepthBuffers[i]));
-                GL(GLenum renderFramebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER));
-                GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+                    frameBuffer->DepthBuffers[i]);
+                GLenum renderFramebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
                 if (renderFramebufferStatus != GL_FRAMEBUFFER_COMPLETE) {
                     ALOGE(
                         "Incomplete frame buffer object: %s",
@@ -932,23 +893,23 @@ static bool ovrFramebuffer_Create(
                 }
             } else {
                 // Create depth buffer.
-                GL(glGenRenderbuffers(1, &frameBuffer->DepthBuffers[i]));
-                GL(glBindRenderbuffer(GL_RENDERBUFFER, frameBuffer->DepthBuffers[i]));
-                GL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height));
-                GL(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+                glGenRenderbuffers(1, &frameBuffer->DepthBuffers[i]);
+                glBindRenderbuffer(GL_RENDERBUFFER, frameBuffer->DepthBuffers[i]);
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
                 // Create the frame buffer.
-                GL(glGenFramebuffers(1, &frameBuffer->FrameBuffers[i]));
-                GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, frameBuffer->FrameBuffers[i]));
-                GL(glFramebufferRenderbuffer(
+                glGenFramebuffers(1, &frameBuffer->FrameBuffers[i]);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, frameBuffer->FrameBuffers[i]);
+                glFramebufferRenderbuffer(
                     GL_DRAW_FRAMEBUFFER,
                     GL_DEPTH_ATTACHMENT,
                     GL_RENDERBUFFER,
-                    frameBuffer->DepthBuffers[i]));
-                GL(glFramebufferTexture2D(
-                    GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0));
-                GL(GLenum renderFramebufferStatus = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER));
-                GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+                    frameBuffer->DepthBuffers[i]);
+                glFramebufferTexture2D(
+                    GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
+                GLenum renderFramebufferStatus = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
                 if (renderFramebufferStatus != GL_FRAMEBUFFER_COMPLETE) {
                     ALOGE(
                         "Incomplete frame buffer object: %s",
@@ -963,11 +924,11 @@ static bool ovrFramebuffer_Create(
 }
 
 static void ovrFramebuffer_Destroy(ovrFramebuffer* frameBuffer) {
-    GL(glDeleteFramebuffers(frameBuffer->TextureSwapChainLength, frameBuffer->FrameBuffers));
+    glDeleteFramebuffers(frameBuffer->TextureSwapChainLength, frameBuffer->FrameBuffers);
     if (frameBuffer->UseMultiview) {
-        GL(glDeleteTextures(frameBuffer->TextureSwapChainLength, frameBuffer->DepthBuffers));
+        glDeleteTextures(frameBuffer->TextureSwapChainLength, frameBuffer->DepthBuffers);
     } else {
-        GL(glDeleteRenderbuffers(frameBuffer->TextureSwapChainLength, frameBuffer->DepthBuffers));
+        glDeleteRenderbuffers(frameBuffer->TextureSwapChainLength, frameBuffer->DepthBuffers);
     }
     vrapi_DestroyTextureSwapChain(frameBuffer->ColorTextureSwapChain);
 
@@ -978,12 +939,12 @@ static void ovrFramebuffer_Destroy(ovrFramebuffer* frameBuffer) {
 }
 
 static void ovrFramebuffer_SetCurrent(ovrFramebuffer* frameBuffer) {
-    GL(glBindFramebuffer(
-        GL_DRAW_FRAMEBUFFER, frameBuffer->FrameBuffers[frameBuffer->TextureSwapChainIndex]));
+    glBindFramebuffer(
+        GL_DRAW_FRAMEBUFFER, frameBuffer->FrameBuffers[frameBuffer->TextureSwapChainIndex]);
 }
 
 static void ovrFramebuffer_SetNone() {
-    GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 static void ovrFramebuffer_Resolve(ovrFramebuffer* frameBuffer) {
@@ -1044,20 +1005,20 @@ static void ovrScene_CreateVAOs(ovrScene* scene) {
         ovrGeometry_CreateVAO(&scene->Cube);
 
         // Modify the VAO to use the instance transform attributes.
-        GL(glBindVertexArray(scene->Cube.VertexArrayObject));
-        GL(glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer));
+        glBindVertexArray(scene->Cube.VertexArrayObject);
+        glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer);
         for (int i = 0; i < 4; i++) {
-            GL(glEnableVertexAttribArray(VERTEX_ATTRIBUTE_LOCATION_TRANSFORM + i));
-            GL(glVertexAttribPointer(
+            glEnableVertexAttribArray(VERTEX_ATTRIBUTE_LOCATION_TRANSFORM + i);
+            glVertexAttribPointer(
                 VERTEX_ATTRIBUTE_LOCATION_TRANSFORM + i,
                 4,
                 GL_FLOAT,
                 false,
                 4 * 4 * sizeof(float),
-                (void*)(i * 4 * sizeof(float))));
-            GL(glVertexAttribDivisor(VERTEX_ATTRIBUTE_LOCATION_TRANSFORM + i, 1));
+                (void*)(i * 4 * sizeof(float)));
+            glVertexAttribDivisor(VERTEX_ATTRIBUTE_LOCATION_TRANSFORM + i, 1);
         }
-        GL(glBindVertexArray(0));
+        glBindVertexArray(0);
 
         scene->CreatedVAOs = true;
     }
@@ -1083,21 +1044,21 @@ static void ovrScene_Create(ovrScene* scene, bool useMultiview) {
     ovrGeometry_CreateCube(&scene->Cube);
 
     // Create the instance transform attribute buffer.
-    GL(glGenBuffers(1, &scene->InstanceTransformBuffer));
-    GL(glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer));
-    GL(glBufferData(GL_ARRAY_BUFFER, NUM_INSTANCES * 4 * 4 * sizeof(float), NULL, GL_DYNAMIC_DRAW));
-    GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    glGenBuffers(1, &scene->InstanceTransformBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer);
+    glBufferData(GL_ARRAY_BUFFER, NUM_INSTANCES * 4 * 4 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Setup the scene matrices.
-    GL(glGenBuffers(1, &scene->SceneMatrices));
-    GL(glBindBuffer(GL_UNIFORM_BUFFER, scene->SceneMatrices));
-    GL(glBufferData(
+    glGenBuffers(1, &scene->SceneMatrices);
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->SceneMatrices);
+    glBufferData(
         GL_UNIFORM_BUFFER,
         2 * sizeof(ovrMatrix4f) /* 2 view matrices */ +
             2 * sizeof(ovrMatrix4f) /* 2 projection matrices */,
         NULL,
-        GL_STATIC_DRAW));
-    GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+        GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Setup random rotations.
     for (int i = 0; i < NUM_ROTATIONS; i++) {
@@ -1162,20 +1123,20 @@ static void ovrScene_Create(ovrScene* scene, bool useMultiview) {
 
     scene->CreatedScene = true;
 
-#if !MULTI_THREADED
+
     ovrScene_CreateVAOs(scene);
-#endif
+
 }
 
 static void ovrScene_Destroy(ovrScene* scene) {
-#if !MULTI_THREADED
+
     ovrScene_DestroyVAOs(scene);
-#endif
+
 
     ovrProgram_Destroy(&scene->Program);
     ovrGeometry_Destroy(&scene->Cube);
-    GL(glDeleteBuffers(1, &scene->InstanceTransformBuffer));
-    GL(glDeleteBuffers(1, &scene->SceneMatrices));
+    glDeleteBuffers(1, &scene->InstanceTransformBuffer);
+    glDeleteBuffers(1, &scene->SceneMatrices);
     scene->CreatedScene = false;
 }
 
@@ -1262,12 +1223,12 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
     }
 
     // Update the instance transform attributes.
-    GL(glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer));
-    GL(ovrMatrix4f* cubeTransforms = (ovrMatrix4f*)glMapBufferRange(
+    glBindBuffer(GL_ARRAY_BUFFER, scene->InstanceTransformBuffer);
+    ovrMatrix4f* cubeTransforms = (ovrMatrix4f*)glMapBufferRange(
            GL_ARRAY_BUFFER,
            0,
            NUM_INSTANCES * sizeof(ovrMatrix4f),
-           GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+           GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
     for (int i = 0; i < NUM_INSTANCES; i++) {
         const int index = scene->CubeRotations[i];
 
@@ -1292,8 +1253,8 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
         cubeTransforms[i].M[3][2] = scene->CubePositions[i].z;
         cubeTransforms[i].M[3][3] = 1.0f;
     }
-    GL(glUnmapBuffer(GL_ARRAY_BUFFER));
-    GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    glUnmapBuffer(GL_ARRAY_BUFFER);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     ovrTracking2 updatedTracking = *tracking;
 
@@ -1306,13 +1267,13 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
     projectionMatrixTransposed[1] = ovrMatrix4f_Transpose(&updatedTracking.Eye[1].ProjectionMatrix);
 
     // Update the scene matrices.
-    GL(glBindBuffer(GL_UNIFORM_BUFFER, scene->SceneMatrices));
-    GL(ovrMatrix4f* sceneMatrices = (ovrMatrix4f*)glMapBufferRange(
+    glBindBuffer(GL_UNIFORM_BUFFER, scene->SceneMatrices);
+    ovrMatrix4f* sceneMatrices = (ovrMatrix4f*)glMapBufferRange(
            GL_UNIFORM_BUFFER,
            0,
            2 * sizeof(ovrMatrix4f) /* 2 view matrices */ +
                2 * sizeof(ovrMatrix4f) /* 2 projection matrices */,
-           GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+           GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
     if (sceneMatrices != NULL) {
         memcpy((char*)sceneMatrices, &eyeViewMatrixTransposed, 2 * sizeof(ovrMatrix4f));
@@ -1322,8 +1283,8 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
             2 * sizeof(ovrMatrix4f));
     }
 
-    GL(glUnmapBuffer(GL_UNIFORM_BUFFER));
-    GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     ovrLayerProjection2 layer = vrapi_DefaultLayerProjection2();
     layer.HeadPose = updatedTracking.HeadPose;
@@ -1343,31 +1304,31 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
         ovrFramebuffer* frameBuffer = &renderer->FrameBuffer[eye];
         ovrFramebuffer_SetCurrent(frameBuffer);
 
-        GL(glUseProgram(scene->Program.Program));
-        GL(glBindBufferBase(
+        glUseProgram(scene->Program.Program);
+        glBindBufferBase(
             GL_UNIFORM_BUFFER,
             scene->Program.UniformBinding[UNIFORM_SCENE_MATRICES],
-            scene->SceneMatrices));
+            scene->SceneMatrices);
         if (scene->Program.UniformLocation[UNIFORM_VIEW_ID] >=
             0) // NOTE: will not be present when multiview path is enabled.
         {
-            GL(glUniform1i(scene->Program.UniformLocation[UNIFORM_VIEW_ID], eye));
+            glUniform1i(scene->Program.UniformLocation[UNIFORM_VIEW_ID], eye);
         }
-        GL(glEnable(GL_SCISSOR_TEST));
-        GL(glDepthMask(GL_TRUE));
-        GL(glEnable(GL_DEPTH_TEST));
-        GL(glDepthFunc(GL_LEQUAL));
-        GL(glEnable(GL_CULL_FACE));
-        GL(glCullFace(GL_BACK));
-        GL(glViewport(0, 0, frameBuffer->Width, frameBuffer->Height));
-        GL(glScissor(0, 0, frameBuffer->Width, frameBuffer->Height));
-        GL(glClearColor(0.125f, 0.0f, 0.125f, 1.0f));
-        GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-        GL(glBindVertexArray(scene->Cube.VertexArrayObject));
-        GL(glDrawElementsInstanced(
-            GL_TRIANGLES, scene->Cube.IndexCount, GL_UNSIGNED_SHORT, NULL, NUM_INSTANCES));
-        GL(glBindVertexArray(0));
-        GL(glUseProgram(0));
+        glEnable(GL_SCISSOR_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glViewport(0, 0, frameBuffer->Width, frameBuffer->Height);
+        glScissor(0, 0, frameBuffer->Width, frameBuffer->Height);
+        glClearColor(0.90f, 0.009f, 0.00900125f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindVertexArray(scene->Cube.VertexArrayObject);
+        glDrawElementsInstanced(
+            GL_TRIANGLES, scene->Cube.IndexCount, GL_UNSIGNED_SHORT, NULL, NUM_INSTANCES);
+        glBindVertexArray(0);
+        glUseProgram(0);
 
         ovrFramebuffer_Resolve(frameBuffer);
         ovrFramebuffer_Advance(frameBuffer);
@@ -1386,249 +1347,7 @@ ovrRenderThread
 ================================================================================
 */
 
-#if MULTI_THREADED
 
-typedef enum { RENDER_FRAME, RENDER_LOADING_ICON } ovrRenderType;
-
-typedef struct {
-    JavaVM* JavaVm;
-    jobject ActivityObject;
-    const ovrEgl* ShareEgl;
-    pthread_t Thread;
-    int Tid;
-    bool UseMultiview;
-    // Synchronization
-    bool Exit;
-    bool WorkAvailableFlag;
-    bool WorkDoneFlag;
-    pthread_cond_t WorkAvailableCondition;
-    pthread_cond_t WorkDoneCondition;
-    pthread_mutex_t Mutex;
-    // Latched data for rendering.
-    ovrMobile* Ovr;
-    ovrRenderType RenderType;
-    long long FrameIndex;
-    double DisplayTime;
-    int SwapInterval;
-    ovrScene* Scene;
-    ovrSimulation Simulation;
-    ovrTracking2 Tracking;
-} ovrRenderThread;
-
-void* RenderThreadFunction(void* parm) {
-    ovrRenderThread* renderThread = (ovrRenderThread*)parm;
-    renderThread->Tid = gettid();
-
-    ovrJava java;
-    java.Vm = renderThread->JavaVm;
-    (*java.Vm)->AttachCurrentThread(java.Vm, &java.Env, NULL);
-    java.ActivityObject = renderThread->ActivityObject;
-
-    // Note that AttachCurrentThread will reset the thread name.
-    prctl(PR_SET_NAME, (long)"OVR::Renderer", 0, 0, 0);
-
-    ovrEgl egl;
-    ovrEgl_CreateContext(&egl, renderThread->ShareEgl);
-
-    GL(glDisable(GL_FRAMEBUFFER_SRGB_EXT));
-
-    ovrRenderer renderer;
-    ovrRenderer_Create(&renderer, &java, renderThread->UseMultiview);
-
-    ovrScene* lastScene = NULL;
-
-    for (;;) {
-        // Signal work completed.
-        pthread_mutex_lock(&renderThread->Mutex);
-        renderThread->WorkDoneFlag = true;
-        pthread_cond_signal(&renderThread->WorkDoneCondition);
-        pthread_mutex_unlock(&renderThread->Mutex);
-
-        // Wait for work.
-        pthread_mutex_lock(&renderThread->Mutex);
-        while (!renderThread->WorkAvailableFlag) {
-            pthread_cond_wait(&renderThread->WorkAvailableCondition, &renderThread->Mutex);
-        }
-        renderThread->WorkAvailableFlag = false;
-        pthread_mutex_unlock(&renderThread->Mutex);
-
-        // Check for exit.
-        if (renderThread->Exit) {
-            break;
-        }
-
-        // Make sure the scene has VAOs created for this context.
-        if (renderThread->Scene != NULL && renderThread->Scene != lastScene) {
-            if (lastScene != NULL) {
-                ovrScene_DestroyVAOs(lastScene);
-            }
-            ovrScene_CreateVAOs(renderThread->Scene);
-            lastScene = renderThread->Scene;
-        }
-
-        // Render.
-        ovrLayer_Union2 layers[ovrMaxLayerCount] = {0};
-        int layerCount = 0;
-        int frameFlags = 0;
-
-        if (renderThread->RenderType == RENDER_FRAME) {
-            ovrLayerProjection2 layer;
-            layer = ovrRenderer_RenderFrame(
-                &renderer,
-                &java,
-                renderThread->Scene,
-                &renderThread->Simulation,
-                &renderThread->Tracking,
-                renderThread->Ovr);
-
-            layers[layerCount++].Projection = layer;
-        } else if (renderThread->RenderType == RENDER_LOADING_ICON) {
-            ovrLayerProjection2 blackLayer = vrapi_DefaultLayerBlackProjection2();
-            blackLayer.Header.Flags |= VRAPI_FRAME_LAYER_FLAG_INHIBIT_SRGB_FRAMEBUFFER;
-            layers[layerCount++].Projection = blackLayer;
-
-            ovrLayerLoadingIcon2 iconLayer = vrapi_DefaultLayerLoadingIcon2();
-            iconLayer.Header.Flags |= VRAPI_FRAME_LAYER_FLAG_INHIBIT_SRGB_FRAMEBUFFER;
-            layers[layerCount++].LoadingIcon = iconLayer;
-
-            frameFlags |= VRAPI_FRAME_FLAG_FLUSH;
-        }
-
-        const ovrLayerHeader2* layerList[ovrMaxLayerCount] = {0};
-        for (int i = 0; i < layerCount; i++) {
-            layerList[i] = &layers[i].Header;
-        }
-
-        ovrSubmitFrameDescription2 frameDesc = {0};
-        frameDesc.Flags = frameFlags;
-        frameDesc.SwapInterval = renderThread->SwapInterval;
-        frameDesc.FrameIndex = renderThread->FrameIndex;
-        frameDesc.DisplayTime = renderThread->DisplayTime;
-        frameDesc.LayerCount = layerCount;
-        frameDesc.Layers = layerList;
-
-        vrapi_SubmitFrame2(renderThread->Ovr, &frameDesc);
-    }
-
-    if (lastScene != NULL) {
-        ovrScene_DestroyVAOs(lastScene);
-    }
-
-    ovrRenderer_Destroy(&renderer);
-    ovrEgl_DestroyContext(&egl);
-
-    (*java.Vm)->DetachCurrentThread(java.Vm);
-
-    return NULL;
-}
-
-static void ovrRenderThread_Clear(ovrRenderThread* renderThread) {
-    renderThread->JavaVm = NULL;
-    renderThread->ActivityObject = NULL;
-    renderThread->ShareEgl = NULL;
-    renderThread->Thread = 0;
-    renderThread->Tid = 0;
-    renderThread->UseMultiview = false;
-    renderThread->Exit = false;
-    renderThread->WorkAvailableFlag = false;
-    renderThread->WorkDoneFlag = false;
-    renderThread->Ovr = NULL;
-    renderThread->RenderType = RENDER_FRAME;
-    renderThread->FrameIndex = 1;
-    renderThread->DisplayTime = 0;
-    renderThread->SwapInterval = 1;
-    renderThread->Scene = NULL;
-    ovrSimulation_Clear(&renderThread->Simulation);
-}
-
-static void ovrRenderThread_Create(
-    ovrRenderThread* renderThread,
-    const ovrJava* java,
-    const ovrEgl* shareEgl,
-    const bool useMultiview) {
-    renderThread->JavaVm = java->Vm;
-    renderThread->ActivityObject = java->ActivityObject;
-    renderThread->ShareEgl = shareEgl;
-    renderThread->Thread = 0;
-    renderThread->Tid = 0;
-    renderThread->UseMultiview = useMultiview;
-    renderThread->Exit = false;
-    renderThread->WorkAvailableFlag = false;
-    renderThread->WorkDoneFlag = false;
-    pthread_cond_init(&renderThread->WorkAvailableCondition, NULL);
-    pthread_cond_init(&renderThread->WorkDoneCondition, NULL);
-    pthread_mutex_init(&renderThread->Mutex, NULL);
-
-    const int createErr =
-        pthread_create(&renderThread->Thread, NULL, RenderThreadFunction, renderThread);
-    if (createErr != 0) {
-        ALOGE("pthread_create returned %i", createErr);
-    }
-}
-
-static void ovrRenderThread_Destroy(ovrRenderThread* renderThread) {
-    pthread_mutex_lock(&renderThread->Mutex);
-    renderThread->Exit = true;
-    renderThread->WorkAvailableFlag = true;
-    pthread_cond_signal(&renderThread->WorkAvailableCondition);
-    pthread_mutex_unlock(&renderThread->Mutex);
-
-    pthread_join(renderThread->Thread, NULL);
-    pthread_cond_destroy(&renderThread->WorkAvailableCondition);
-    pthread_cond_destroy(&renderThread->WorkDoneCondition);
-    pthread_mutex_destroy(&renderThread->Mutex);
-}
-
-static void ovrRenderThread_Submit(
-    ovrRenderThread* renderThread,
-    ovrMobile* ovr,
-    ovrRenderType type,
-    long long frameIndex,
-    double displayTime,
-    int swapInterval,
-    ovrScene* scene,
-    const ovrSimulation* simulation,
-    const ovrTracking2* tracking) {
-    // Wait for the renderer thread to finish the last frame.
-    pthread_mutex_lock(&renderThread->Mutex);
-    while (!renderThread->WorkDoneFlag) {
-        pthread_cond_wait(&renderThread->WorkDoneCondition, &renderThread->Mutex);
-    }
-    renderThread->WorkDoneFlag = false;
-    // Latch the render data.
-    renderThread->Ovr = ovr;
-    renderThread->RenderType = type;
-    renderThread->FrameIndex = frameIndex;
-    renderThread->DisplayTime = displayTime;
-    renderThread->SwapInterval = swapInterval;
-    renderThread->Scene = scene;
-    if (simulation != NULL) {
-        renderThread->Simulation = *simulation;
-    }
-    if (tracking != NULL) {
-        renderThread->Tracking = *tracking;
-    }
-    // Signal work is available.
-    renderThread->WorkAvailableFlag = true;
-    pthread_cond_signal(&renderThread->WorkAvailableCondition);
-    pthread_mutex_unlock(&renderThread->Mutex);
-}
-
-static void ovrRenderThread_Wait(ovrRenderThread* renderThread) {
-    // Wait for the renderer thread to finish the last frame.
-    pthread_mutex_lock(&renderThread->Mutex);
-    while (!renderThread->WorkDoneFlag) {
-        pthread_cond_wait(&renderThread->WorkDoneCondition, &renderThread->Mutex);
-    }
-    pthread_mutex_unlock(&renderThread->Mutex);
-}
-
-static int ovrRenderThread_GetTid(ovrRenderThread* renderThread) {
-    ovrRenderThread_Wait(renderThread);
-    return renderThread->Tid;
-}
-
-#endif // MULTI_THREADED
 
 /*
 ================================================================================
@@ -1653,11 +1372,9 @@ typedef struct {
     int GpuLevel;
     int MainThreadTid;
     int RenderThreadTid;
-#if MULTI_THREADED
-    ovrRenderThread RenderThread;
-#else
+
     ovrRenderer Renderer;
-#endif
+
     bool UseMultiview;
 } ovrApp;
 
@@ -1680,11 +1397,9 @@ static void ovrApp_Clear(ovrApp* app) {
     ovrEgl_Clear(&app->Egl);
     ovrScene_Clear(&app->Scene);
     ovrSimulation_Clear(&app->Simulation);
-#if MULTI_THREADED
-    ovrRenderThread_Clear(&app->RenderThread);
-#else
+
     ovrRenderer_Clear(&app->Renderer);
-#endif
+
 }
 
 static void ovrApp_HandleVrModeChanges(ovrApp* app) {
@@ -1732,10 +1447,7 @@ static void ovrApp_HandleVrModeChanges(ovrApp* app) {
         }
     } else {
         if (app->Ovr != NULL) {
-#if MULTI_THREADED
-            // Make sure the renderer thread is no longer using the ovrMobile.
-            ovrRenderThread_Wait(&app->RenderThread);
-#endif
+
             ALOGV("        eglGetCurrentSurface( EGL_DRAW ) = %p", eglGetCurrentSurface(EGL_DRAW));
 
             ALOGV("        vrapi_LeaveVrMode()");
@@ -1885,7 +1597,7 @@ void android_main(struct android_app* app) {
 
     EglInitExtensions();
 
-    GL(glDisable(GL_FRAMEBUFFER_SRGB_EXT));
+    glDisable(GL_FRAMEBUFFER_SRGB_EXT);
 
     appState.UseMultiview &= glExtensions.multi_view;
 
@@ -1895,14 +1607,9 @@ void android_main(struct android_app* app) {
     appState.GpuLevel = GPU_LEVEL;
     appState.MainThreadTid = gettid();
 
-#if MULTI_THREADED
-    ovrRenderThread_Create(
-        &appState.RenderThread, &appState.Java, &appState.Egl, appState.UseMultiview);
-    // Also set the renderer thread to SCHED_FIFO.
-    appState.RenderThreadTid = ovrRenderThread_GetTid(&appState.RenderThread);
-#else
+
     ovrRenderer_Create(&appState.Renderer, &java, appState.UseMultiview);
-#endif
+
 
     app->userData = &appState;
     app->onAppCmd = app_handle_cmd;
@@ -1940,21 +1647,9 @@ void android_main(struct android_app* app) {
         // Create the scene if not yet created.
         // The scene is created here to be able to show a loading icon.
         if (!ovrScene_IsCreated(&appState.Scene)) {
-#if MULTI_THREADED
+
             // Show a loading icon.
-            ovrRenderThread_Submit(
-                &appState.RenderThread,
-                appState.Ovr,
-                RENDER_LOADING_ICON,
-                appState.FrameIndex,
-                appState.DisplayTime,
-                appState.SwapInterval,
-                NULL,
-                NULL,
-                NULL);
-#else
-            // Show a loading icon.
-            int frameFlags = 0;
+            int frameFlags = 0 + domath(0.1f, 0.25f);
             frameFlags |= VRAPI_FRAME_FLAG_FLUSH;
 
             ovrLayerProjection2 blackLayer = vrapi_DefaultLayerBlackProjection2();
@@ -1977,7 +1672,7 @@ void android_main(struct android_app* app) {
             frameDesc.Layers = layers;
 
             vrapi_SubmitFrame2(appState.Ovr, &frameDesc);
-#endif
+
 
             // Create the scene.
             ovrScene_Create(&appState.Scene, appState.UseMultiview);
@@ -2002,19 +1697,7 @@ void android_main(struct android_app* app) {
         // display time.
         ovrSimulation_Advance(&appState.Simulation, predictedDisplayTime - startTime);
 
-#if MULTI_THREADED
-        // Render the eye images on a separate thread.
-        ovrRenderThread_Submit(
-            &appState.RenderThread,
-            appState.Ovr,
-            RENDER_FRAME,
-            appState.FrameIndex,
-            appState.DisplayTime,
-            appState.SwapInterval,
-            &appState.Scene,
-            &appState.Simulation,
-            &tracking);
-#else
+
         // Render eye images and setup the primary layer using ovrTracking2.
         const ovrLayerProjection2 worldLayer = ovrRenderer_RenderFrame(
             &appState.Renderer,
@@ -2036,14 +1719,12 @@ void android_main(struct android_app* app) {
 
         // Hand over the eye images to the time warp.
         vrapi_SubmitFrame2(appState.Ovr, &frameDesc);
-#endif
+
     }
 
-#if MULTI_THREADED
-    ovrRenderThread_Destroy(&appState.RenderThread);
-#else
+
     ovrRenderer_Destroy(&appState.Renderer);
-#endif
+
 
     ovrScene_Destroy(&appState.Scene);
     ovrEgl_DestroyContext(&appState.Egl);
