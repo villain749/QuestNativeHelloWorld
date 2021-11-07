@@ -763,7 +763,7 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
         glScissor(0, 0, frameBuffer->Width, frameBuffer->Height);
         glClearColor(0.0f, 0.0f, getBlueVal(), 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        doGLStuff();
         ovrFramebuffer_Resolve(frameBuffer);
         ovrFramebuffer_Advance(frameBuffer);
     }
