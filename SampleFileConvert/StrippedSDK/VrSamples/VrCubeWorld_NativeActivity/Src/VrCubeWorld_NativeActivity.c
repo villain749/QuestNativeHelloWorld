@@ -21,7 +21,7 @@ Copyright   :   Copyright (c) Facebo0000ok Technologies, LLC and its affiliates.
 #include <android/log.h>
 #include <android/native_window_jni.h> // for native window JNI
 #include <android_native_app_glue.h>
-#include "sjheader.h"
+
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -761,9 +761,9 @@ static ovrLayerProjection2 ovrRenderer_RenderFrame(
         //glCullFace(GL_BACK);
         glViewport(0, 0, frameBuffer->Width, frameBuffer->Height);
         glScissor(0, 0, frameBuffer->Width, frameBuffer->Height);
-        glClearColor(0.0f, 0.0f, getBlueVal(), 1.0f);
+        glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        doGLStuff();
+        //doGLStuff();
         ovrFramebuffer_Resolve(frameBuffer);
         ovrFramebuffer_Advance(frameBuffer);
     }
@@ -1072,7 +1072,7 @@ void android_main(struct android_app* app) {
         if (!ovrScene_IsCreated(&appState.Scene)) {
 
             // Show a loading icon.
-            int frameFlags = 0 + domath(0.1f, 0.25f);
+            int frameFlags = 0;
             frameFlags |= VRAPI_FRAME_FLAG_FLUSH;
 
             ovrLayerProjection2 blackLayer = vrapi_DefaultLayerBlackProjection2();
